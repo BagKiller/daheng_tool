@@ -39,6 +39,59 @@ namespace VegaBeamTool.Camera
         public override void SetCameraSN(string strSN) => _strSN = strSN;
         public override void SetCameraMac(string strMac) => _strMac = strMac;
 
+        public override CameraVendor Vendor => CameraVendor.DahengMercury3;
+
+        public override IReadOnlyList<CameraDeviceInfo> EnumerateDevices()
+        {
+            List<CameraDeviceInfo> listDevice = [];
+            try
+            {
+                lock (_cameraLock)
+                {
+                    if (null == _cameraControl.IGxFactory)
+                    {
+                        return listDevice;
+                    }
+
+                    _listIGXDeviceInfo.Clear();
+                    _cameraControl.IGxFactory.UpdateAllDeviceList(200, _listIGXDeviceInfo);
+
+                    for (int nIndex = 0; nIndex < _listIGXDeviceInfo.Count; nIndex++)
+                    {
+                        IGXDeviceInfo objDeviceInfo = _listIGXDeviceInfo[nIndex];
+                        string strSN = objDeviceInfo.GetSN();
+                        string strModel = objDeviceInfo.GetModelName();
+                        listDevice.Add(new CameraDeviceInfo
+                        {
+                            Vendor = CameraVendor.DahengMercury3,
+                            Index = nIndex,
+                            SerialNumber = strSN,
+                            Model = strModel,
+                            DisplayName = $"[{nIndex}] {strModel} ({strSN})",
+                        });
+                    }
+                }
+            }
+            catch (CGalaxyException objError)
+            {
+                testLogger.Error("error code:" + objError.GetErrorCode().ToString() + "error Message:" + objError.Message);
+            }
+            return listDevice;
+        }
+
+        public override void SelectDevice(CameraDeviceInfo device)
+        {
+            _strSN = device.SerialNumber;
+            _nComId = device.Index;
+        }
+
+        public override void Dispose()
+        {
+            Stop();
+            UnInit();
+            base.Dispose();
+        }
+
         public override bool GetCameraStartSatuts() => _cameraControl.IsOpen;
         public override bool Snapshot(out byte[]? byteImage)
         {

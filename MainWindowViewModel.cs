@@ -15,6 +15,14 @@ namespace VegaBeamTool
             }
         }
 
+        public void Shutdown()
+        {
+            if (CameraShowView.DataContext is CameraShowViewModel cameraShowViewModel)
+            {
+                cameraShowViewModel.Shutdown();
+            }
+        }
+
         [ObservableProperty]
         private CameraShowView _cameraShowView;
 

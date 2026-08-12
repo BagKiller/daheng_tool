@@ -243,6 +243,7 @@
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition/>
@@ -253,17 +254,19 @@
                                 <ColumnDefinition/>
                                 <ColumnDefinition/>
                             </Grid.ColumnDefinitions>
-                            <Border Grid.Column="0" 
-                             Grid.Row="0" 
+                            <Border Grid.Column="0"
                              BorderThickness ="0.5,0.5,0,0"
                              Style="{StaticResource BorderStyle}">
-                                <TextBlock Text="SN" Width="20" Height="20" Style="{StaticResource TextStyle}"/>
+                                <TextBlock Text="Camera Model" Width="95" Height="20" Style="{StaticResource TextStyle}"/>
                             </Border>
                             <Border Grid.Column="1"
-                             Grid.Row="0" 
                              BorderThickness="0.5,0.5,0,0"
                              Style="{StaticResource BorderStyle}">
-                                <TextBox Text="{Binding SNValue}" Width="100" Height="20" FontSize="10" HorizontalAlignment="Center"/>
+                                <ComboBox ItemsSource="{Binding CameraModels}"
+                                          SelectedItem="{Binding SelectedCameraModel}"
+                                          IsEnabled="{Binding CameraStartStatus}"
+                                          Width="120" Height="20" FontSize="10"
+                                          VerticalAlignment="Center" HorizontalAlignment="Center"/>
                             </Border>
                         </Grid>
                         <Grid Grid.Row="1" Grid.Column="0">
@@ -272,13 +275,27 @@
                                 <ColumnDefinition/>
                             </Grid.ColumnDefinitions>
                             <Border Grid.Column="0" 
-                             Grid.Row="0" 
                              BorderThickness ="0.5,0.5,0,0"
                              Style="{StaticResource BorderStyle}">
-                                <TextBlock Text="ExposureTime" Width="95" Height="20" Style="{StaticResource TextStyle}"/>
+                                <TextBlock Text="SN" Width="20" Height="20" Style="{StaticResource TextStyle}"/>
                             </Border>
                             <Border Grid.Column="1"
-                             Grid.Row="0" 
+                             BorderThickness="0.5,0.5,0,0"
+                             Style="{StaticResource BorderStyle}">
+                                <TextBox Text="{Binding SNValue}" Width="100" Height="20" FontSize="10" HorizontalAlignment="Center"/>
+                            </Border>
+                        </Grid>
+                        <Grid Grid.Row="2" Grid.Column="0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition/>
+                                <ColumnDefinition/>
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" 
+                             BorderThickness ="0.5,0.5,0,0"
+                             Style="{StaticResource BorderStyle}">
+                                <TextBlock Text="ExposureTime(us)" Width="105" Height="20" Style="{StaticResource TextStyle}"/>
+                            </Border>
+                            <Border Grid.Column="1"
                              BorderThickness="0.5,0.5,0,0"
                              Style="{StaticResource BorderStyle}">
                                 <TextBox Text="{Binding ExposureTimeValue}" Width="100" Height="20" FontSize="10" HorizontalAlignment="Center">
@@ -290,73 +307,99 @@
                                 </TextBox>
                             </Border>
                         </Grid>
-                        <Grid Grid.Row="2" Grid.Column="0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition/>
-                                <ColumnDefinition/>
-                            </Grid.ColumnDefinitions>
-                            <Border Grid.Column="0" 
-                             Grid.Row="0" 
-                             BorderThickness ="0.5,0.5,0,0"
-                             Style="{StaticResource BorderStyle}">
-                                <TextBlock Text="GlobalGain" Width="75" Height="20" Style="{StaticResource TextStyle}"/>
-                            </Border>
-                            <Border Grid.Column="1"
-                             Grid.Row="0" 
-                             BorderThickness="0.5,0.5,0,0"
-                             Style="{StaticResource BorderStyle}">
-                                <TextBox Text="{Binding GlobalGainValue}" Width="100" Height="20" FontSize="10" HorizontalAlignment="Center"/>
-                            </Border>
-                        </Grid>
                         <Grid Grid.Row="3" Grid.Column="0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition/>
                                 <ColumnDefinition/>
                             </Grid.ColumnDefinitions>
                             <Border Grid.Column="0" 
-                                    Grid.Row="0" 
-                                    BorderThickness ="0.5,0.5,0,0.5"
-                                    Style="{StaticResource BorderStyle}">
-                                <TextBlock Text="Coefficient" Width="75" Height="20" Style="{StaticResource TextStyle}"/>
+                             BorderThickness ="0.5,0.5,0,0"
+                             Style="{StaticResource BorderStyle}">
+                                <TextBlock Text="GlobalGain" Width="75" Height="20" Style="{StaticResource TextStyle}"/>
                             </Border>
                             <Border Grid.Column="1"
-                                    Grid.Row="0" 
-                                    BorderThickness="0.5,0.5,0,0.5"
-                                    Style="{StaticResource BorderStyle}">
-                                <TextBox Text="{Binding CoefficientValue}" Width="100" Height="20" FontSize="10" HorizontalAlignment="Center"/>
+                             BorderThickness="0.5,0.5,0,0"
+                             Style="{StaticResource BorderStyle}">
+                                <TextBox Text="{Binding GlobalGainValue}" Width="100" Height="20" FontSize="10" HorizontalAlignment="Center"/>
                             </Border>
                         </Grid>
-                        <Grid Grid.Row="0" Grid.Column="2">
+                        <Grid Grid.Row="4" Grid.Column="0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition/>
                                 <ColumnDefinition/>
                             </Grid.ColumnDefinitions>
                             <Border Grid.Column="0" 
-                                    Grid.Row="0" 
+                                    BorderThickness ="0.5,0.5,0,0.5"
+                                    Style="{StaticResource BorderStyle}">
+                                <TextBlock Text="Coefficient" Width="75" Height="20" Style="{StaticResource TextStyle}"/>
+                            </Border>
+                            <Border Grid.Column="1"
+                                    BorderThickness="0.5,0.5,0,0.5"
+                                    Style="{StaticResource BorderStyle}">
+                                <TextBox Text="{Binding CoefficientValue}" Width="100" Height="20" FontSize="10" HorizontalAlignment="Center"/>
+                            </Border>
+                        </Grid>
+                        <Grid Grid.Row="0" Grid.Column="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition/>
+                                <ColumnDefinition/>
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0"
+                                    BorderThickness ="0.5,0.5,0,0"
+                                    Style="{StaticResource BorderStyle}">
+                                <TextBlock Text="Device" Width="55" Height="20" Style="{StaticResource TextStyle}"/>
+                            </Border>
+                            <Border Grid.Column="1"
+                                    BorderThickness="0.5,0.5,0.5,0"
+                                    Style="{StaticResource BorderStyle}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <ComboBox Grid.Column="0"
+                                              ItemsSource="{Binding DeviceList}"
+                                              SelectedItem="{Binding SelectedDevice}"
+                                              IsEnabled="{Binding CameraStartStatus}"
+                                              Height="20" FontSize="10" Margin="3,0"
+                                              VerticalAlignment="Center"/>
+                                    <Button Grid.Column="1" Content="Scan"
+                                            Command="{Binding ScanDevicesCommand}"
+                                            IsEnabled="{Binding DeviceScanEnabled}"
+                                            Width="50" Height="20" Margin="3,0"
+                                            VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                        <Grid Grid.Row="1" Grid.Column="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition/>
+                                <ColumnDefinition/>
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" 
                                     BorderThickness ="0.5,0.5,0,0"
                                     Style="{StaticResource BorderStyle}">
                                 <TextBlock Text="Average Times" Height="20" Style="{StaticResource TextStyle}"/>
                             </Border>
                             <Border Grid.Column="1"
-                                    Grid.Row="0" 
                                     BorderThickness="0.5,0.5,0.5,0"
                                     Style="{StaticResource BorderStyle}">
                                 <TextBox Text="{Binding AverageTimesValue}" Width="100" Height="20" FontSize="10" HorizontalAlignment="Center"/>
                             </Border>
                         </Grid>
-                        <Grid Grid.Row="1" Grid.Column="2">
+                        <Grid Grid.Row="2" Grid.Column="1">
                             <Border BorderThickness ="0.5,0.5,0.5,0"  Style="{StaticResource BorderStyle}">
                                 <TextBlock Text="{Binding SelectPathValue}" Height="20" Style="{StaticResource TextStyle}"/>
                             </Border>
                         </Grid>
-                        <Grid Grid.Row="2" Grid.Column="2">
-                            <Border BorderThickness="0.5,0,0.5,0" Style="{StaticResource BorderStyle}">
+                        <Grid Grid.Row="3" Grid.Column="1">
+                            <Border BorderThickness="0.5,0.5,0.5,0" Style="{StaticResource BorderStyle}">
                                 <Button Width="150" Content="SelectSaveImagePath" Command="{Binding SelectSaveImagePathCommand}" VerticalAlignment="Center" HorizontalAlignment="Center" />
                             </Border>
                         </Grid>
-                        <Grid Grid.Row="3" Grid.Column="2">
+                        <Grid Grid.Row="4" Grid.Column="1">
                             <Border BorderThickness="0.5,0.5,0.5,0.5" Style="{StaticResource BorderStyle}">
-                                <Button Grid.Column="2" Grid.Row="3" Width="80" Content="SaveConfig" Command="{Binding SaveConfigCommand}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                <Button Width="80" Content="SaveConfig" Command="{Binding SaveConfigCommand}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                             </Border>
                         </Grid>
                       </Grid>

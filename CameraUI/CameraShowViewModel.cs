@@ -24,15 +24,20 @@ namespace VegaBeamTool.CameraUI
     {
         public CameraShowViewModel()
         {
-            _camera = new Mercury3Camera();
-            _camera?.RegisterCallbackBitmap(ImageProcessorFunc);
             _curDispatcher = Dispatcher.CurrentDispatcher;
+            CameraModels = new ObservableCollection<CameraModelOption>(CameraFactory.SupportedModels);
+            DeviceList = [];
+            InitLoadConfig();
+
+            _camera = CameraFactory.Create(_cameraVendor);
+            _camera.RegisterCallbackBitmap(ImageProcessorFunc);
+            SelectedCameraModel = CameraFactory.GetModelOption(_cameraVendor);
+
             CameraImage = null;
             ImageWidth = 2484;
             ImageHeight = 2484;
             CameraStartStatus = true;
             CameraStopStatus = false;
-            InitLoadConfig();
 
             RecordTable = new CoordinateRecordView() { DataContext = new CoordinateRecordViewModel() };
 
@@ -51,6 +56,22 @@ namespace VegaBeamTool.CameraUI
             TestText = "开始连续存图";
             /*LineSeriesElement.Add(new GraphImageView() { DataContext = new GraphImageViewModel() });
             LineSeriesElement.Add(new GraphImageView() { DataContext = new GraphImageViewModel() });*/
+        }
+
+        /// <summary>
+        /// 退出前必须归还相机 SDK 资源，否则 TUCam 不会执行 Api_Uninit，下次启动可能打不开设备。
+        /// </summary>
+        public void Shutdown()
+        {
+            try
+            {
+                _camera.UnRegisterCallbackBitmap(ImageProcessorFunc);
+                _camera.Dispose();
+            }
+            catch (Exception ex)
+            {
+                testLogger.Error(ex.Message, ex);
+            }
         }
 
         public void RegisterUpdateImage(CallbackUpdateImageBitmap callbackUpdate) => CallBackUpdateImage += callbackUpdate;
@@ -105,26 +126,29 @@ namespace VegaBeamTool.CameraUI
                     GlobalGainValue = Convert.ToInt32(Type[3]);
                     CoefficientValue = Convert.ToDouble(Type[4]);
                     AverageTimesValue = Convert.ToInt32(Type[5]);
+                    // 相机型号是后加的字段，旧配置文件没有这一项
+                    _cameraVendor = Type.Length >= 7 ? CameraFactory.ParseVendor(Type[6]) : CameraVendor.DahengMercury3;
                 }
                 else
                 {
-                    SNValue = string.Empty;
-                    SelectPathValue = string.Empty;
-                    ExposureTimeValue = 0;
-                    GlobalGainValue = 0;
-                    CoefficientValue = 1;
-                    AverageTimesValue = 1;
+                    ResetConfigToDefault();
                 }
             }
             else
             {
-                SNValue = string.Empty;
-                SelectPathValue = string.Empty;
-                ExposureTimeValue = 0;
-                GlobalGainValue = 0;
-                CoefficientValue = 1;
-                AverageTimesValue = 1;
+                ResetConfigToDefault();
             }
+        }
+
+        private void ResetConfigToDefault()
+        {
+            SNValue = string.Empty;
+            SelectPathValue = string.Empty;
+            ExposureTimeValue = 0;
+            GlobalGainValue = 0;
+            CoefficientValue = 1;
+            AverageTimesValue = 1;
+            _cameraVendor = CameraVendor.DahengMercury3;
         }
 
         /*private List<GraphDataItem> _tangentialBeamGraphDataItems = new List<GraphDataItem>();
@@ -644,7 +668,8 @@ namespace VegaBeamTool.CameraUI
 
 
 
-        private readonly Mercury3Camera _camera;
+        private CameraBase _camera;
+        private CameraVendor _cameraVendor = CameraVendor.DahengMercury3;
         private Dispatcher _curDispatcher;
         private const string _configName = "ToolConfig";
 
@@ -694,6 +719,21 @@ namespace VegaBeamTool.CameraUI
 
         [ObservableProperty]
         private string _sNValue;
+
+        [ObservableProperty]
+        private ObservableCollection<CameraModelOption> _cameraModels;
+
+        [ObservableProperty]
+        private CameraModelOption _selectedCameraModel = CameraFactory.SupportedModels[0];
+
+        [ObservableProperty]
+        private ObservableCollection<CameraDeviceInfo> _deviceList;
+
+        [ObservableProperty]
+        private CameraDeviceInfo? _selectedDevice;
+
+        [ObservableProperty]
+        private bool _deviceScanEnabled = true;
 
         [ObservableProperty]
         private int _exposureTimeValue;
@@ -903,6 +943,107 @@ namespace VegaBeamTool.CameraUI
         }
 
 
+        partial void OnSelectedCameraModelChanged(CameraModelOption value)
+        {
+            if (value is null || _camera.Vendor == value.Vendor)
+            {
+                return;
+            }
+            SwitchCamera(value.Vendor);
+        }
+
+        partial void OnSelectedDeviceChanged(CameraDeviceInfo? value)
+        {
+            if (value is null)
+            {
+                return;
+            }
+
+            _camera.SelectDevice(value);
+            if (!string.IsNullOrEmpty(value.SerialNumber))
+            {
+                SNValue = value.SerialNumber;
+            }
+        }
+
+        private void SwitchCamera(CameraVendor vendor)
+        {
+            try
+            {
+                _camera.UnRegisterCallbackBitmap(ImageProcessorFunc);
+                _camera.Dispose();
+
+                _cameraVendor = vendor;
+                _camera = CameraFactory.Create(vendor);
+                _camera.RegisterCallbackBitmap(ImageProcessorFunc);
+
+                DeviceList.Clear();
+                SelectedDevice = null;
+                SNValue = string.Empty;
+                ImageWidth = _camera.ImageWidth;
+                ImageHeight = _camera.ImageHeight;
+                ChangeButtonStatus();
+
+                if (!_camera.IsSdkAvailable)
+                {
+                    MessageBox.Show(_camera.SdkMissingHint, "Message", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                testLogger.Error(ex.Message, ex);
+                MessageBox.Show($"Switch camera failed: {ex.Message}", "Message", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        [RelayCommand]
+        public async Task ScanDevices()
+        {
+            if (_camera.GetCameraStartSatuts())
+            {
+                MessageBox.Show("Please stop the camera before scanning devices", "Message", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (!_camera.IsSdkAvailable)
+            {
+                MessageBox.Show(_camera.SdkMissingHint, "Message", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            DeviceScanEnabled = false;
+            try
+            {
+                // 枚举会阻塞若干秒（Tucsen 需重新初始化 SDK），不能占用 UI 线程
+                IReadOnlyList<CameraDeviceInfo> listDevice = await Task.Run(_camera.EnumerateDevices);
+
+                string strPreviousSN = SNValue;
+                DeviceList.Clear();
+                foreach (CameraDeviceInfo device in listDevice)
+                {
+                    DeviceList.Add(device);
+                }
+
+                SelectedDevice = DeviceList.FirstOrDefault(device => !string.IsNullOrEmpty(strPreviousSN)
+                                                                     && device.SerialNumber == strPreviousSN)
+                                 ?? DeviceList.FirstOrDefault();
+
+                if (0 == DeviceList.Count)
+                {
+                    MessageBox.Show("No camera detected", "Message", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                testLogger.Error(ex.Message, ex);
+                MessageBox.Show($"Scan devices failed: {ex.Message}", "Message", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                DeviceScanEnabled = true;
+            }
+        }
+
         [RelayCommand]
         public void StartCamera()
         {
@@ -914,13 +1055,21 @@ namespace VegaBeamTool.CameraUI
                     return;
                 }
 
-                if (string.IsNullOrEmpty(SNValue))
+                if (SelectedDevice is not null)
                 {
-                    MessageBox.Show("SN is empty", "Message", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    _camera.SelectDevice(SelectedDevice);
+                }
+                else if (CameraVendor.DahengMercury3 == _camera.Vendor && !string.IsNullOrEmpty(SNValue))
+                {
+                    // 兼容原有的手填 SN 流程
+                    _camera.SetCameraSN(SNValue);
+                }
+                else
+                {
+                    MessageBox.Show("Please scan and select a camera device", "Message", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
-                _camera.SetCameraSN(SNValue);
                 _camera.Start();
                 if (_camera.GetCameraStartSatuts())
                 {
@@ -1095,9 +1244,9 @@ namespace VegaBeamTool.CameraUI
         {
             try
             {
-                if (string.IsNullOrEmpty(SNValue))
+                if (string.IsNullOrEmpty(SNValue) && SelectedDevice is null)
                 {
-                    MessageBox.Show($"TSNValue is empty", "Message", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show($"Please select a camera device or input the SN", "Message", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
@@ -1126,6 +1275,7 @@ namespace VegaBeamTool.CameraUI
                     GlobalGainValue.ToString(),
                     CoefficientValue.ToString(),
                     AverageTimesValue.ToString(),
+                    _camera.Vendor.ToString(),
                 };
                 System.Xml.Serialization.XmlSerializer ser = new System.Xml.Serialization.XmlSerializer(typeof(string[]));
                 System.IO.FileStream fs = new(_configName, System.IO.FileMode.Create);

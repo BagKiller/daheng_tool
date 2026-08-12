@@ -7,7 +7,26 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<UseWPF>true</UseWPF>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<!-- TUCam.dll 与大恒 SDK 均为原生 x64，产物必须是 64 位。
+		     这里只设 PlatformTarget，不设 Platforms，否则解决方案的 Any CPU 配置会映射不到本项目。 -->
+		<PlatformTarget>x64</PlatformTarget>
 	</PropertyGroup>
+
+	<!-- codesamples 是厂商 SDK 示例、Tools 是独立自检工具，均不参与主程序编译 -->
+	<ItemGroup>
+		<Compile Remove="codesamples\**;Tools\**" />
+		<Page Remove="codesamples\**;Tools\**" />
+		<Resource Remove="codesamples\**;Tools\**" />
+		<None Remove="codesamples\**;Tools\**" />
+		<EmbeddedResource Remove="codesamples\**;Tools\**" />
+	</ItemGroup>
+
+	<!-- 厂商提供的 P/Invoke 声明文件，保持与官方 SDK 一致，不为其修补告警 -->
+	<ItemGroup>
+		<Compile Update="Camera\Tucsen\TUCamera.cs">
+			<NoWarn>CS0649;CS0169;CS0414;CS8618;CS8625</NoWarn>
+		</Compile>
+	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Autofac" Version="8.1.1" />

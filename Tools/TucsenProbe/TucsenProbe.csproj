@@ -1,0 +1,30 @@
+<!--
+  Tucsen 相机连通性自检工具，不属于 VegaBeamTool 主程序（已在主 csproj 中排除）。
+  接上相机后在仓库根目录执行 dotnet run，项目参数指向本文件即可。
+  它会依次检查 TUCam.dll 定位、SDK 初始化、设备枚举、参数范围与取帧格式。
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <PlatformTarget>x64</PlatformTarget>
+    <AssemblyName>TucsenProbe</AssemblyName>
+    <RootNamespace>TucsenProbe</RootNamespace>
+    <NoWarn>$(NoWarn);CS0649;CS0169;CS0414;CS8618;CS8625</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NLog" Version="5.3.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\Logger.cs" Link="Logger.cs" />
+    <Compile Include="..\..\Camera\Tucsen\TUCamera.cs" Link="TUCamera.cs" />
+    <Compile Include="..\..\Camera\Tucsen\TucsenSdkLoader.cs" Link="TucsenSdkLoader.cs" />
+    <Compile Include="..\..\Camera\Tucsen\TucsenApi.cs" Link="TucsenApi.cs" />
+  </ItemGroup>
+
+</Project>

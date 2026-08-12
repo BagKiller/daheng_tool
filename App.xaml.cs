@@ -16,6 +16,7 @@ namespace VegaBeamTool
             var window = new MainWindow();
             var windowViewModel = new MainWindowViewModel();
             window.DataContext = windowViewModel;
+            window.Closed += (_, _) => windowViewModel.Shutdown();
             window.Show();
         }
     }
