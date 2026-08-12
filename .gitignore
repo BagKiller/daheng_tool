@@ -17,3 +17,4 @@ obj/
 # Logs
 Logs/
 *.log
+/codesamples
